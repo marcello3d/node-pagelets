@@ -1,0 +1,23 @@
+{
+  "name": "pagelets",
+  "version": "0.1.0",
+  "description": "Pagelet is a node.js framework for describing web pages in terms of hierarchical fragments.",
+  "main": "pagelets.js",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/marcello3d/node-pagelet.git"
+  },
+  "engines": {
+    "node": ">=0.10"
+  },
+  "dependencies": {
+    "tosource": "~0.1.1",
+    "ractive": "~0.3.5"
+  },
+  "keywords": [
+    "pagelet"
+  ],
+  "author": "Marcello Bastéa-Forte <marcello@cellosoft.com>",
+  "license": "zlib",
+  "readmeFilename": "Readme.md"
+}
