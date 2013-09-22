@@ -1,11 +1,11 @@
 var Ractive = require('ractive/build/Ractive.runtime')
 
-module.exports = function(transporter) {
+module.exports = function(getPagelet) {
     var currentRactive
     var components = { pagelet: RactivePagelet }
 
     function RactivePagelet(options) {
-        var pagelet = transporter.getPagelet(options.data.href)
+        var pagelet = getPagelet(options.data.href)
         var route = pagelet.route
         if (!route.Component) {
             route.Component = Ractive.extend({

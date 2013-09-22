@@ -1,10 +1,27 @@
 window.PPinit = function(initialRoutes) {
     var router = require('./router')()
-    var network = require('./network')
+    var transporter = require('./transporter')
     var cache = require('./cache')(router)
-    var JsModel = require('../lib/jsmodel')
-    var transporter = require('./transporter')(network, cache, JsModel)
-    var templater = require('./ractive-templater')(transporter)
+    var JsModel = require('../server/jsmodel')
+
+
+    function getPagelet(url) {
+        return cache.get(url, function(route) {
+            var model = new JsModel
+            // TODO: version tag feature?
+            var data = transporter.getData(url, model)
+            return {
+                url:url,
+                route:route,
+                model:model,
+                teardown: function() {
+                    data.disconnect()
+                }
+            }
+        })
+    }
+
+    var templater = require('./ractive-templater')(getPagelet)
 
     var lastPath
 

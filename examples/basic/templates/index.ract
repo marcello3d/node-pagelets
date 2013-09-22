@@ -1,0 +1,5 @@
+<div id="body">
+    <rv-pagelet href="#/header" title="Index page"/>
+    <p>Welcome to the sample app!</p>
+    <rv-pagelet href="#/footer" />
+</div>

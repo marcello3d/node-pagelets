@@ -1,0 +1,3 @@
+<div id="footer">
+    Sample footer {{date}}
+</div>
