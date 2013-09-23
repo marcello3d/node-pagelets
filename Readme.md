@@ -1,40 +1,37 @@
-Pagelet Engine
+Pagelets
 ==============
 
-Pagelet is a node.js framework for describing web pages in terms of hierarchical fragments.
+Pagelets is a node.js framework for describing web pages in terms of realtime hierarchical fragments.
 
 Each pagelet consists of a URL route, a template, and a data source.
 
 There are three main modular components that orchestrate this:
 
-* The URL Router --- maps urls to pagelets
-* The Data-Transport Layer --- connects the client to the server
-* The Templating Engine --- maps data to HTML/DOM
+* The Router --- maps urls to pagelets
+* The Transporter --- connects the client to the server
+* The Templater --- maps data to HTML/DOM
 
 In addition, most apps will want:
-* A Data Model Engine
-* A Cache Control/Data Versioning Layer
+* Realtime Models + Delta Operations
+* Cache Control
 
-These work in conjunction with the Data-Transport layer to manage data efficiently.
+These would integrate into the Transporter layer to allow for streaming content.
 
 Each component consists of client-side and server-side code. They can be swapped out with a different implementation
 (as they are all very opinionated).
 
 
-
 API: EXPERIMENTAL
 ================
 
-URL Router
+The Router
 ----------
-The URL router allows you to map arbitrary URLs to pagelets.
+The router maps arbitrary URLs to pagelets.
 
 API:
 ```js
 
 ```
-
-
 
 
 Templating Engine
