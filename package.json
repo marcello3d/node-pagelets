@@ -11,13 +11,17 @@
     "node": ">=0.10"
   },
   "dependencies": {
-    "tosource": "~0.1.1",
-    "ractive": "~0.3.5"
+    "tosource": "~0.1.1"
   },
   "keywords": [
     "pagelet"
   ],
   "author": "Marcello Bastéa-Forte <marcello@cellosoft.com>",
   "license": "zlib",
-  "readmeFilename": "Readme.md"
+  "readmeFilename": "Readme.md",
+  "devDependencies": {
+    "express": "~3.4.0",
+    "enchilada": "~0.4.1",
+    "ractive": "~0.3.5"
+  }
 }

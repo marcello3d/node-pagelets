@@ -6,6 +6,7 @@ module.exports = function(getPagelet) {
 
     function RactivePagelet(options) {
         var pagelet = getPagelet(options.data.href)
+        if (!pagelet) { throw new Error("Could not load pagelet: "+options.data.href)}
         var route = pagelet.route
         if (!route.Component) {
             route.Component = Ractive.extend({
@@ -40,7 +41,9 @@ module.exports = function(getPagelet) {
                 currentRactive.teardown()
             }
             currentRactive = new RactivePagelet({
-                href:url,
+                data:{
+                    href:url
+                },
                 el:document.body
             })
         }

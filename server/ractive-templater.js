@@ -1,4 +1,4 @@
-var ractive = require('ractive')
+var Ractive = require('ractive')
 var fs = require('fs')
 
 module.exports = RactiveTemplater
@@ -17,7 +17,7 @@ function RactiveTemplater(options) {
  */
 RactiveTemplater.prototype.compile = function(pagelet) {
     var template = Ractive.parse(fs.readFileSync(this.viewsPath + '/' + pagelet.options.template, 'utf8'))
-    pagelet.spec.ract = template
+    pagelet.browser.ract = template
 
     var pageletHrefs = []
 
