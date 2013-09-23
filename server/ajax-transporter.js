@@ -7,14 +7,20 @@ module.exports = function(pagelets, options) {
 
     this.middleware = function(req, res, next) {
         if (req.url === ajaxEndpoint) {
-            console.log(req.headers['content-type'])
             parser(req, res, function() {
                 if (req.body.getRoutes) {
+                    var browserSpecs = pagelets.getPageletSpec(req.body.getRoutes).browserSpecs
                     res.header('Content-Type','application/json')
-                    res.end(JSON.stringify(pagelets.getPageletSpec(req.body.getRoutes).browserSpecs))
+                    res.end(JSON.stringify(browserSpecs))
                 } else if (req.body.getData) {
-                    res.header('Content-Type','application/json')
-                    res.end(JSON.stringify({}))
+                    var pageletSpec = pagelets.getPageletSpec(req.body.getData)
+                    if (pageletSpec.model) {
+                        pageletSpec.model(req, function(error, model) {
+                            if (error) { return next(error) }
+                            res.header('Content-Type','application/json')
+                            res.end(JSON.stringify(model.get()))
+                        })
+                    }
                 } else {
                     next()
                 }

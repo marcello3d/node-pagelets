@@ -1,18 +1,20 @@
-module.exports = function Model() {
-    var data = {}
+module.exports = function Model(initialData) {
+    var data = initialData || {}
     var listeners = {
         set:[],
         update:[],
         delta:[]
     }
-    this.applyDelta = function(delta) {
+
+    var self = this
+    self.applyDelta = function(delta) {
         if ('set' in delta) {
-            this.set(delta.set, delta.value)
+            self.set(delta.set, delta.value)
         } else if ('update' in delta) {
-            this.update(delta.update)
+            self.update(delta.update)
         }
     }
-    this.get = function(path) {
+    self.get = function(path) {
         if (arguments.length === 0) { return data }
         var o = data
         var split = path.split(/\./);
@@ -22,12 +24,12 @@ module.exports = function Model() {
         }
         return o
     }
-    this.update = function(path) {
+    self.update = function(path) {
         listeners.update.forEach(function(listener) {
             listener(path || '')
         })
     }
-    this.set = function(path, newValue) {
+    self.set = function(path, newValue) {
         var oldValue
         if (arguments.length === 1) {
             newValue = path
@@ -51,29 +53,28 @@ module.exports = function Model() {
             })
         }
     }
-    this.on = function(type, onListener) {
+    self.on = function(type, onListener) {
         listeners[type].push(onListener)
     }
-    this.off = function(type, offListener) {
+    self.off = function(type, offListener) {
         listeners[type] = listeners[type].filter(function(listener) {
             return listener !== offListener
         })
     }
-    this.emit = function(type) {
-        var args = Array.prototype.slice.apply(arguments,1)
+    self.emit = function(type) {
+        var args = Array.prototype.slice.call(arguments,1)
         listeners[type].forEach(function(listener) {
             listener.apply(null, args)
         })
     }
-
-    this.on('set', function(path, value) {
-        this.emit('delta', {
+    self.on('set', function(path, value) {
+        self.emit('delta', {
             set:path,
             value:value
         })
     })
-    this.on('update', function(path) {
-        this.emit('delta', {
+    self.on('update', function(path) {
+        self.emit('delta', {
             update:path
         })
     })

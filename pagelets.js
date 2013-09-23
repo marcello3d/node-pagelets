@@ -52,7 +52,17 @@ PageletManager.prototype.serve = function(req, res, next) {
 
     return true
 }
+function wrapModel(model) {
+    // Already a function?
+    if (typeof model === 'function') {
+        return model
+    }
+    // Wrap with function
+    return function (req, callback) {
+        callback(null, model)
+    }
 
+}
 PageletManager.prototype.define = function(path, options) {
     this.compiled = false
     var pageletSpec = {
@@ -60,9 +70,12 @@ PageletManager.prototype.define = function(path, options) {
         options: options,
         browser: { path:path }
     }
+    if (options.model) {
+        pageletSpec.model = wrapModel(options.model)
+        pageletSpec.browser.model = true
+    }
     var title = options.title || this.options.title
     if (title) { pageletSpec.browser.title = title }
-
 
     this.pageletSpecs.push(pageletSpec)
     this.pageletSpecMap[path] = pageletSpec

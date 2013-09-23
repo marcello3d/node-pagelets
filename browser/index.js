@@ -2,14 +2,20 @@ module.exports = function (options) {
     var router = options.router()
     var transporter = options.transporter
     var cache = options.cache(router)
-    var JsModel = options.model
+    var Model = options.model
     var templater = options.templater(getPagelet)
 
     function getPagelet(url) {
         return cache.get(url, function(route) {
-            var model = new JsModel
-            // TODO: version tag feature?
-            var disconnect = transporter.getData(url, model)
+            // TODO: support per-route model types?
+            var model = new Model
+            var disconnect
+            if (route.model) {
+                // TODO: version tag management?
+                disconnect = transporter.getData(url, model)
+            } else {
+                disconnect = function() {}
+            }
             return {
                 url:url,
                 route:route,
@@ -45,16 +51,14 @@ module.exports = function (options) {
             url = url || document.location.pathname
             var route = router.route(url)
             if (route) {
-                if (lastPath === url) {
-                    console.log("Already loaded "+lastPath)
-                } else {
+                if (lastPath !== url) {
                     lastPath = url
                     console.log("Loading "+lastPath)
                     templater.show(url)
                     if (pushState) {
-                        history.pushState({}, '', url)
+                        history.pushState({}, document.title, url)
                     } else {
-                        history.replaceState({}, '', url)
+                        history.replaceState({}, document.title, url)
                     }
                 }
             } else {

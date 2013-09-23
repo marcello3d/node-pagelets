@@ -5,7 +5,7 @@ var enchilada = require('enchilada')
 var Pagelets = require('pagelets')
 var RactiveTemplater = require('pagelets/server/ractive-templater')
 var AjaxTransport = require('pagelets/server/ajax-transporter')
-
+var JsModel = require('pagelets/server/jsmodel')
 
 // Pagelets manager
 var pagelets = new Pagelets({
@@ -20,16 +20,19 @@ pagelets.define('/', {
     template:'index.ract'
 })
 pagelets.define('/page2', {
-    template:'page2.ract'
+    template:'page2.ract',
+    model: function(req, callback) {
+        callback(null, new JsModel({
+            message:"Random: "+Math.floor(Math.random()*100)
+        }))
+    }
 })
 pagelets.define('#/header', {
     template:'_header.ract'
 })
 pagelets.define('#/footer', {
     template:'_footer.ract',
-    model: {
-        date:new Date
-    }
+    model: new JsModel({ date:new Date })
 })
 
 pagelets.compile()

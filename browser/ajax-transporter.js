@@ -8,13 +8,16 @@ module.exports = function(ajaxEndpoint) {
                 if (req.status !== 200) {
                     callback({status: req.status, error: req.statusText})
                 } else {
+                    console.log("AJAX response to "+query+": "+req.responseText)
                     callback(null, JSON.parse(req.responseText))
                 }
             }
         }
+        query = JSON.stringify(query)
+        console.log("AJAX request to "+ajaxEndpoint+": "+query)
         req.open("post", ajaxEndpoint, true)
         req.setRequestHeader('Content-Type','application/json')
-        req.send(JSON.stringify(query))
+        req.send(query)
         return req
     }
     return {
