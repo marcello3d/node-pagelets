@@ -78,4 +78,7 @@ module.exports = function Model(initialData) {
             update:path
         })
     })
+    self.hasDeltaListeners = function() {
+        return listeners.delta.length
+    }
 }

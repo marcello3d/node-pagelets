@@ -22,18 +22,27 @@ pagelets.define('/', {
 pagelets.define('/page2', {
     template:'page2.ract',
     model: function(req, callback) {
-        callback(null, new JsModel({
-            message:"Random: "+Math.floor(Math.random()*100)
-        }))
+        var model = new JsModel()
+        var interval = setInterval(function() {
+            if (!model.hasDeltaListeners()) {
+                clearInterval(interval)
+            }
+            model.set('message', "Random: "+Math.floor(Math.random()*100))
+        },50)
+        callback(null, model)
     }
 })
 pagelets.define('#/header', {
     template:'_header.ract'
 })
+var footerModel = new JsModel({ date:new Date })
 pagelets.define('#/footer', {
     template:'_footer.ract',
-    model: new JsModel({ date:new Date })
+    model: footerModel
 })
+setInterval(function() {
+    footerModel.set('date', new Date)
+}, 1000)
 
 pagelets.compile()
 

@@ -18,7 +18,18 @@ module.exports = function(pagelets, options) {
                         pageletSpec.model(req, function(error, model) {
                             if (error) { return next(error) }
                             res.header('Content-Type','application/json')
-                            res.end(JSON.stringify(model.get()))
+                            // Listen for changes
+                            model.on('delta', onDelta)
+                            // Stop listening to model when connection is cloesd
+                            req.socket.on('close', function() {
+                                model.off('delta', onDelta)
+                            })
+                            function onDelta(delta) {
+                                console.log("Writing delta for "+req.body.getData)
+                                res.write(JSON.stringify(delta)+'\n')
+                            }
+                            // Write out initial value
+                            res.write(JSON.stringify({set:'', value:model.get()})+'\n')
                         })
                     }
                 } else {
