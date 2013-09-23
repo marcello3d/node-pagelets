@@ -7,21 +7,20 @@ var RactiveTemplater = require('pagelets/server/ractive-templater')
 var AjaxTransport = require('pagelets/server/ajax-transporter')
 
 
-// Transport layer for use by pagelets
-var transporter = new AjaxTransport
-
 // Pagelets manager
 var pagelets = new Pagelets({
     templater: new RactiveTemplater({
         viewsPath: __dirname+'/templates'
     }),
-    browserJsPath:'/app.js',
-    transporter: transporter
+    browserJsPath:'/app.js'
 })
 
 // Define pagelets
 pagelets.define('/', {
     template:'index.ract'
+})
+pagelets.define('/page2', {
+    template:'page2.ract'
 })
 pagelets.define('#/header', {
     template:'_header.ract'
@@ -36,6 +35,9 @@ pagelets.define('#/footer', {
 pagelets.compile()
 
 var app = express()
+
+// Transport layer for use by pagelets
+var transporter = new AjaxTransport(pagelets)
 
 app.use(pagelets.middleware) // Handle top-level page requests
 app.use(transporter.middleware) // Handle pagelet ajax requests

@@ -1,0 +1,5 @@
+<div id="body">
+    <rv-pagelet href="#/header" title="Second page"/>
+    <p>Here is the second page.</p>
+    <rv-pagelet href="#/footer" />
+</div>

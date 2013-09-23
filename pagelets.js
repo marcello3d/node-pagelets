@@ -8,10 +8,6 @@ function PageletManager(options) {
     if (!options) { throw new Error("options required") }
 
     this.options = options
-    if (!options.transporter) {
-        throw new Error("options.transporter required")
-    }
-    this.transporter = options.transporter
     this.templater = options.templater || require('./server/ractive-templater')
     this.router = new (options.router || require('router-core'))
     this.pageletSpecs = []
@@ -20,15 +16,19 @@ function PageletManager(options) {
     this.browserJsPath = options.browserJsPath
 }
 
+PageletManager.prototype.getPageletSpec = function(url) {
+    var route = this.router.route(url)
+    if (!route) { return false }
+    this.compile()
+    return route.value
+}
 PageletManager.prototype.serve = function(req, res, next) {
-    var route = this.router.route(req.url)
-    if (!route) {
+    var pageletSpec = this.getPageletSpec(req.url)
+    if (!pageletSpec) {
         next()
         return false
     }
-    this.compile()
     res.setHeader("Content-Type", "text/html;charset=utf-8")
-    var pageletSpec = route.value
     res.write(
         '<!DOCTYPE html><meta charset=utf-8>'+
         '<body><script src="'+this.options.browserJsPath+'"></script>\n'
@@ -71,7 +71,7 @@ PageletManager.prototype.define = function(path, options) {
 
     // TODO: fit these in better
 //    this.cache.add(path, pageletSpec)
-    this.transporter.add(path, pageletSpec)
+//    this.transporter.add(path, pageletSpec)
 
 }
 PageletManager.prototype.compile = function() {
@@ -84,7 +84,6 @@ PageletManager.prototype.compile = function() {
         // TODO: support multiple templaters?
         var hrefs = self.templater.compile(pagelet)
         var pathMap = {}
-        console.log("hrefs",hrefs)
 
         // Dereference referenced pagelets
         if (hrefs) {
@@ -95,9 +94,7 @@ PageletManager.prototype.compile = function() {
                 if (!routedHref) {
                     throw new Error("Unknown referenced pagelet '"+href+"' from "+pagelet.path+" template")
                 }
-                var path = routedHref.route.path
-                console.log(href+" -> "+path)
-                pathMap[path] = true
+                pathMap[routedHref.route.path] = true
             })
         }
         pagelet.pageletSpecs = Object.keys(pathMap).map(function(path) {
@@ -119,7 +116,6 @@ PageletManager.prototype.compile = function() {
         }
         walkChildPagelets(pageletSpec)
         pageletSpec.browserSpecs = browserSpecs
-        console.log(pageletSpec.path+" -> "+Object.keys(map))
     })
     this.compiled = true
 }
