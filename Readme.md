@@ -66,8 +66,52 @@ Templater.prototype.show = function(url) {
 ```
 
 
-Model
------
+Model Stream API
+----------------
+
+Model stream is a low-level message stream for sending live updates to a model. The content of the messages is up to the
+model implementation.
+
+For example:
+
+A simple implementation could send out the entire model whenever there is a change. For tiny data models (e.g. a hit
+counter) or models that change infrequently, this may actually be the most efficient approach.
+
+"Smarter" model implementations can send change operations that update parts of the model as they change. This
+would be beneficial for larger data models that change frequently.
+
+An even smarter model implementation can use the version tag feature to support change operations over a longer time
+frame. Combined with some type of browser-backed local storage, this might be beneficial for even larger models or
+offline syncing.
+
+Server API:
+```js
+var stream = model.readStream(tag) // return ModelStream starting from scratch or from a given version tag
+// ModelStream events
+stream.on('data', function(
+                    data, // anything you want to send to the client
+                    tag // optional version tag for use in future model.readStream calls
+                  ) { ... })
+stream.once('error', function(error) { ... })
+stream.once('close', function() { ... })
+
+// Close the stream, stop sending events, trigger a 'close' event
+stream.close()
+```
+
+Tags optionally allow you to optimize re-connections and long polling requests. They are opaque to the transporter and
+should be compact strings (as they may be sent frequently and will be used for comparisons).
+
+If no tag is specified in `model.readStream()`, then you can assume the client has no data. If you do not recognize a
+tag, you should assume the client model has data that needs to be replaced.
+
+Browser API:
+```js
+model.applyData(data, tag) // apply a data event from a ModelStream, should assign tag to this.lastTag
+model.lastTag // retrieve last tag
+```
+
+
 
 Browser and Server API:
 ```js
