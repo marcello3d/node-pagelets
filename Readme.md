@@ -111,6 +111,56 @@ model.applyData(data, tag) // apply a data event from a ModelStream, should assi
 model.lastTag // retrieve last tag
 ```
 
+Model Delta Message Format
+--------------------------
+This is just one way to do this.
+
+A message is a json-serializable object with an number of optional "commands" (represented as keys). A field-path format
+is used to reference positions in the data structure.
+
+```js
+{
+    // replace field with completely new value (replaces whole
+    $set: {
+       "field-path1": value,
+       "field-path2": value2,
+       ...
+    },
+    // merge field with new tree
+    $merge: {
+       "field-path1": value,
+       "field-path2": value2,
+       ...
+    },
+    // delete field from object
+    $delete: [
+        "field-path1",
+        "field-path2",
+        ...
+    ],
+    // number += increment
+    $inc: {
+        "number-path1": increment1,
+        "number-path2": increment2,
+        ...
+    },
+    // array push to end
+    $array_push: {
+        "array-path1": [ value ],
+        "array-path2": [ value1, value2, ... ],
+        ...
+    }
+    // array splice (delete and/or insert at index)
+    $array_splice: {
+        "array-path1": [ index ], // remove index'ed item
+        "array-path2": [ index, length ], // remove length items starting at index
+        "array-path3": [ index, length, newItems ], // remove length items starting at index and insert newItems
+        ...
+    }
+}
+```
+
+
 
 
 Browser and Server API:
