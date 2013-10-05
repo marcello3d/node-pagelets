@@ -10,21 +10,22 @@ function PageletManager(options) {
     this.options = options
     this.templater = options.templater || require('./server/ractive-templater')
     this.router = new (options.router || require('router-core'))
-    this.pageletSpecs = []
-    this.pageletSpecMap = {}
+    this.routes = []
+    this.routeMap = {}
     this.middleware = this.serve.bind(this)
     this.browserJsPath = options.browserJsPath
 }
 
-PageletManager.prototype.getPageletSpec = function(url) {
+PageletManager.prototype.getRoute = function(url) {
     var route = this.router.route(url)
     if (!route) { return false }
     this.compile()
-    return route.value
+    route.pagelet = route.value
+    return route
 }
 PageletManager.prototype.serve = function(req, res, next) {
-    var pageletSpec = this.getPageletSpec(req.url)
-    if (!pageletSpec) {
+    var route = this.getRoute(req.url)
+    if (!route) {
         next()
         return false
     }
@@ -34,7 +35,7 @@ PageletManager.prototype.serve = function(req, res, next) {
         '<body><script src="'+this.options.browserJsPath+'"></script>\n'
     )
 
-    res.write('<script>PPinit('+toSource(pageletSpec.browserSpecs,null,0)+')</script>\n')
+    res.write('<script>PPinit('+toSource(route.pagelet.browserSpecs,null,0)+')</script>\n')
     res.end()
 
     // TODO: can we stream changes down to the client here?
@@ -52,17 +53,6 @@ PageletManager.prototype.serve = function(req, res, next) {
 
     return true
 }
-function wrapModel(model) {
-    // Already a function?
-    if (typeof model === 'function') {
-        return model
-    }
-    // Wrap with function
-    return function (req, callback) {
-        callback(null, model)
-    }
-
-}
 PageletManager.prototype.define = function(path, options) {
     this.compiled = false
     var pageletSpec = {
@@ -71,20 +61,19 @@ PageletManager.prototype.define = function(path, options) {
         browser: { path:path }
     }
     if (options.model) {
-        pageletSpec.model = wrapModel(options.model)
+        pageletSpec.model = options.model
         pageletSpec.browser.model = true
     }
     var title = options.title || this.options.title
     if (title) { pageletSpec.browser.title = title }
 
-    this.pageletSpecs.push(pageletSpec)
-    this.pageletSpecMap[path] = pageletSpec
+    this.routes.push(pageletSpec)
+    this.routeMap[path] = pageletSpec
 
-    this.router.add(path, pageletSpec)
-
-    // TODO: fit these in better
-//    this.cache.add(path, pageletSpec)
-//    this.transporter.add(path, pageletSpec)
+    var routeInfo = this.router.add(path, pageletSpec)
+    if (routeInfo.regexp) {
+        pageletSpec.browser.reg = routeInfo.regexp
+    }
 
 }
 PageletManager.prototype.compile = function() {
@@ -93,9 +82,9 @@ PageletManager.prototype.compile = function() {
     var self = this
 
     // Compile each pagelet
-    this.pageletSpecs.forEach(function(pagelet) {
+    this.routes.forEach(function(route) {
         // TODO: support multiple templaters?
-        var hrefs = self.templater.compile(pagelet)
+        var hrefs = self.templater.compile(route)
         var pathMap = {}
 
         // Dereference referenced pagelets
@@ -105,18 +94,18 @@ PageletManager.prototype.compile = function() {
                 // e.g. "/foo/{{bar}}/bah"
                 var routedHref = self.router.route(href)
                 if (!routedHref) {
-                    throw new Error("Unknown referenced pagelet '"+href+"' from "+pagelet.path+" template")
+                    throw new Error("Unknown referenced route '"+href+"' from "+route.path+" template")
                 }
                 pathMap[routedHref.route.path] = true
             })
         }
-        pagelet.pageletSpecs = Object.keys(pathMap).map(function(path) {
-            return self.pageletSpecMap[path]
+        route.routes = Object.keys(pathMap).map(function(path) {
+            return self.routeMap[path]
         })
     })
 
     // Find all pagelets referenced from a given pagelet
-    this.pageletSpecs.forEach(function(pageletSpec) {
+    this.routes.forEach(function(pageletSpec) {
         var map = {}
         var browserSpecs = []
         // Recursively walk pagelet tree
@@ -124,7 +113,7 @@ PageletManager.prototype.compile = function() {
             if (!map[pagelet.path]) {
                 map[pagelet.path] = pagelet
                 browserSpecs.push(pagelet.browser)
-                pagelet.pageletSpecs.forEach(walkChildPagelets)
+                pagelet.routes.forEach(walkChildPagelets)
             }
         }
         walkChildPagelets(pageletSpec)

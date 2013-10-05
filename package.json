@@ -21,8 +21,8 @@
   "readmeFilename": "Readme.md",
   "devDependencies": {
     "express": "~3.4.0",
-    "enchilada": "~0.4.1",
-    "ractive": "~0.3.5",
+    "enchilada": "~0.4.2",
+    "ractive": "git://github.com/Rich-Harris/Ractive",
     "connect": "~2.9.0"
   }
 }

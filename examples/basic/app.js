@@ -22,13 +22,16 @@ pagelets.define('/', {
 pagelets.define('/page2', {
     template:'page2.ract',
     model: function(req, callback) {
-        var model = new JsModel()
+        var model = new JsModel
         var interval = setInterval(function() {
             if (!model.hasDeltaListeners()) {
                 clearInterval(interval)
             }
             model.set('message', "Random: "+Math.floor(Math.random()*100))
         },50)
+        req.on('disconnect', function() {
+            clearInterval(interval)
+        })
         callback(null, model)
     }
 })
@@ -49,10 +52,8 @@ pagelets.compile()
 var app = express()
 
 // Transport layer for use by pagelets
-var transporter = new AjaxTransport(pagelets)
-
 app.use(pagelets.middleware) // Handle top-level page requests
-app.use(transporter.middleware) // Handle pagelet ajax requests
+app.use(AjaxTransport(pagelets)) // Handle pagelet ajax requests
 
 app.use(enchilada({ src: __dirname+'/static/' })) // Serve up browserified JavaScript
 app.use(express.static(__dirname+'/static/')) // Serve up static files

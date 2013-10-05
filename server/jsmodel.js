@@ -25,9 +25,7 @@ module.exports = function Model(initialData) {
         return o
     }
     self.update = function(path) {
-        listeners.update.forEach(function(listener) {
-            listener(path || '')
-        })
+        self.emit('update', path||'')
     }
     self.set = function(path, newValue) {
         var oldValue
@@ -35,9 +33,7 @@ module.exports = function Model(initialData) {
             newValue = path
             oldValue = data
             data = newValue
-            listeners.set.forEach(function(listener) {
-                listener('', newValue, oldValue)
-            })
+            self.emit('set', newValue, oldValue)
         } else {
             var o = {0:data}
             var lastKey = 0
@@ -48,9 +44,7 @@ module.exports = function Model(initialData) {
             })
             oldValue = o[lastKey]
             o[lastKey] = newValue
-            listeners.set.forEach(function(listener) {
-                listener(path, newValue, oldValue)
-            })
+            self.emit('set', newValue, oldValue)
         }
     }
     self.on = function(type, onListener) {

@@ -86,7 +86,9 @@ offline syncing.
 
 Server API:
 ```js
-var stream = model.readStream(tag) // return ModelStream starting from scratch or from a given version tag
+model.type // a unique string identifier for this model type (needs to match browser API)
+model.readStream(tag) // return ModelStream starting from scratch or from a given version tag
+
 // ModelStream events
 stream.on('data', function(
                     data, // anything you want to send to the client
@@ -107,6 +109,9 @@ tag, you should assume the client model has data that needs to be replaced.
 
 Browser API:
 ```js
+ModelConstructor // no-arg constructor function that returns a new instance of the model
+ModelConstructor.type // string identifier that matches the server-side
+
 model.applyData(data, tag) // apply a data event from a ModelStream, should assign tag to this.lastTag
 model.lastTag // retrieve last tag
 ```
