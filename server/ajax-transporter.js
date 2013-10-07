@@ -8,61 +8,45 @@ module.exports = function(pagelets, options) {
             return next()
         }
         bodyParser(req, res, function () {
-            var url
-            if (req.body.getRoutes) {
-                url = req.body.getRoutes
-                var browserSpecs = pagelets.getRoute(url).pagelet.browserSpecs
-                res.header('Content-Type', 'application/json')
-                res.end(JSON.stringify(browserSpecs))
-            } else if (req.body.getData) {
-                url = req.body.getData
-                var route = pagelets.getRoute(url)
-                var pageletSpec = route.pagelet
-                if (pageletSpec.model) {
-                    var request = {
-                        url:req.body.getData,
-                        params:route.params
-                    }
-                    var sentModel
-                    var response = {
-                        error: function() {
-                            res.end(500)
+            var url = req.body.url
+            console.log(url+": "+req.body.action)
+            switch (req.body.action) {
+                case 'routes':
+                    var browserSpecs = pagelets.getRoute(url).pagelet.browserSpecs
+                    res.header('Content-Type', 'application/json')
+                    res.end(JSON.stringify(browserSpecs))
+                    break
+
+                case 'get':
+                    res.header('Content-Type', 'application/json')
+                    var transport = {
+                        send:function(type, data) {
+                            console.log(req.body.url+": Sending "+type)
+                            res.write(JSON.stringify([type, data])+'\n')
                         },
-                        model: function(model) {
-                            if (sentModel) { throw new Error("Already sent model!") }
-                            sentModel = true
-                            var stream = model.readStream(req.body.tag || undefined)
-                            res.header('Content-Type', 'application/json')
-                            function writeObject(object) {
-                                res.write(JSON.stringify(object)+'\n')
-                            }
-                            writeObject({ type:model.type })
-                            // ModelStream events
-                            stream.on('data', function(data, tag) {
-                                writeObject({ tag:tag, data:data })
-                            })
-                            stream.once('error', function(error) {
-                                writeObject({
-                                    error:error
-                                })
-                            })
-                            stream.once('close', function() {
-                                res.end()
-                            })
-                            // Stop listening to model when connection is closed
-                            req.socket.on('close', function () {
-                                stream.close()
-                            })
+                        close:function() {
+                            res.end()
                         }
                     }
-                    pageletSpec.model(request, response)
-                } else {
-                    console.error()
-                    res.status(404)
-                    res.end()
-                }
-            } else {
-                next()
+                    // Stop listening to model when connection is closed
+                    req.socket.on('close', function () {
+                        if (transport.onClose) {
+                            transport.onClose()
+                        }
+                    })
+                    if (false === pagelets.servePageletData({
+                        url:url,
+                        tag:req.body.tag || null,
+                        headers:req.headers,
+                        transport:transport
+                    })) {
+                        res.status(404)
+                        res.end()
+                    }
+                    break
+
+                default:
+                    next()
             }
         })
     }

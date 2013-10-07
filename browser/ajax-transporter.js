@@ -43,18 +43,14 @@ module.exports = function(ajaxEndpoint) {
     }
     return {
         getRoutes: function(url, routesCallback) {
-            ajax({getRoutes:url}, routesCallback)
+            ajax({action:'routes', url:url}, routesCallback)
         },
-        getData: function(url, callback, closeCallback) {
-            var req = ajax({getData:url}, function(error, json) {
+        getData: function(url, packetCallback, closeCallback) {
+            var req = ajax({action:'get', url:url}, function(error, json) {
                 if (error) {
-                    callback(error)
-                } else if (json) {
-                    if (json.error) {
-                        callback(json.error)
-                    } else {
-                        callback(null, json)
-                    }
+                    packetCallback('error', error)
+                } else {
+                    packetCallback(json[0], json[1])
                 }
             }, closeCallback)
             return function disconnect() {

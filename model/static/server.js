@@ -7,7 +7,7 @@ function StaticModel(data) {
 }
 
 StaticModel.prototype.type = 'static'
-StaticModel.prototype.readStream = function() {
+StaticModel.prototype.readStream = function(tag) {
     var stream = new Listenable
     var closed
     stream.close = function() {

@@ -10,10 +10,12 @@ function PageletManager(options) {
     this.options = options
     this.templater = options.templater || require('./server/ractive-templater')
     this.router = new (options.router || require('router-core'))
+    this.connectionFilters = []
     this.routes = []
     this.routeMap = {}
     this.middleware = this.serve.bind(this)
     this.browserJsPath = options.browserJsPath
+    this.debug = options.debug
 }
 
 PageletManager.prototype.getRoute = function(url) {
@@ -35,7 +37,7 @@ PageletManager.prototype.serve = function(req, res, next) {
         '<body><script src="'+this.options.browserJsPath+'"></script>\n'
     )
 
-    res.write('<script>PPinit('+toSource(route.pagelet.browserSpecs,null,0)+')</script>\n')
+    res.write('<script>PPinit('+this.compiled+')</script>\n')
     res.end()
 
     // TODO: can we stream changes down to the client here?
@@ -53,6 +55,71 @@ PageletManager.prototype.serve = function(req, res, next) {
 
     return true
 }
+PageletManager.prototype.serveConnection = function(options, callback) {
+    var index = 0
+    var filters = this.connectionFilters
+    function tryNext() {
+        if (index < filters.length) {
+//            var filter = filters[index++]
+//            filter(request, response, )
+            tryNext()
+        } else {
+            callback()
+        }
+    }
+    tryNext()
+}
+PageletManager.prototype.servePageletData = function(options) {
+    var url = options.url
+    var transport = options.transport
+    var route = this.getRoute(url)
+    if (!route) {
+        return false
+    }
+    var pageletSpec = route.pagelet
+    var request = {
+        url:url,
+        params:route.params,
+        headers:options.headers,
+        connection:options.connection
+    }
+    function sendError(error) {
+        transport.send('error', error)
+        transport.close()
+    }
+    var sentModel
+    var response = {
+        error: sendError,
+        redirect: function(url) {
+            transport.send('redirect', url)
+            transport.close()
+        },
+        model: function(model) {
+            if (sentModel) {
+                throw new Error("Can only send model once")
+            }
+            sentModel = true
+            var stream = model.readStream(options.tag)
+            transport.onClose = function() {
+                stream.close()
+            }
+            transport.send('model', { type:model.type })
+            // ModelStream events
+            stream.on('data', function(data, tag) {
+                transport.send('data', { tag:tag, data:data })
+            })
+            stream.once('error', sendError)
+            stream.once('close', function() {
+                transport.close()
+            })
+        }
+    }
+    pageletSpec.get(request, response)
+    return true
+}
+PageletManager.prototype.connectionFilter = function(connectionFilter) {
+    this.connectionFilters.push(connectionFilter)
+}
 PageletManager.prototype.define = function(path, options) {
     this.compiled = false
     var pageletSpec = {
@@ -60,9 +127,9 @@ PageletManager.prototype.define = function(path, options) {
         options: options,
         browser: { path:path }
     }
-    if (options.model) {
-        pageletSpec.model = options.model
-        pageletSpec.browser.model = true
+    if (options.get) {
+        pageletSpec.get = options.get
+        pageletSpec.browser.get = true
     }
     var title = options.title || this.options.title
     if (title) { pageletSpec.browser.title = title }
@@ -119,5 +186,8 @@ PageletManager.prototype.compile = function() {
         walkChildPagelets(pageletSpec)
         pageletSpec.browserSpecs = browserSpecs
     })
-    this.compiled = true
+    var allRouteBrowserSpecs = this.routes.map(function (route) {
+        return route.browser
+    })
+    this.compiled = toSource(allRouteBrowserSpecs, null, this.debug ? '  ' : 0)
 }
