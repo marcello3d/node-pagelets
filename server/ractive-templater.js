@@ -16,7 +16,12 @@ function RactiveTemplater(options) {
  * @return {Array} list of referenced pagelet paths
  */
 RactiveTemplater.prototype.compile = function(pagelet) {
-    var template = Ractive.parse(fs.readFileSync(this.viewsPath + '/' + pagelet.options.template, 'utf8'))
+    if (!pagelet.options.template) {
+        return []
+    }
+    var path = this.viewsPath + '/' + pagelet.options.template
+    try { require(path) } catch (e) {}
+    var template = Ractive.parse(fs.readFileSync(path, 'utf8'))
     pagelet.browser.ract = template
 
     var pageletHrefs = []
