@@ -18,7 +18,7 @@ module.exports = function(pagelets, options) {
                     break
 
                 case 'get':
-                    res.header('Content-Type', 'application/json')
+                    res.setHeader('Content-Type', 'application/json')
                     var transport = {
                         send:function(type, data) {
                             console.log(req.body.url+": Sending "+type)
@@ -38,6 +38,10 @@ module.exports = function(pagelets, options) {
                         url:url,
                         tag:req.body.tag || null,
                         headers:req.headers,
+                        setHeader: function(name, value) {
+                            console.log("Setting header: ",name, value)
+                            res.setHeader(name, value)
+                        },
                         transport:transport
                     })) {
                         res.status(404)

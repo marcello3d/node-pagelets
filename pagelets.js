@@ -90,6 +90,9 @@ PageletManager.prototype.servePageletData = function(options) {
     var sentModel
     var response = {
         error: sendError,
+        setHeader: function(header, value) {
+            transport.setHeader(header, value)
+        },
         redirect: function(url) {
             transport.send('redirect', url)
             transport.close()
