@@ -1,16 +1,17 @@
 module.exports = function(ajaxEndpoint) {
     ajaxEndpoint = ajaxEndpoint || '/!pagejax'
 
-    function ajax(query, callback, doneCallback) {
+    function ajax(url, action, callback, doneCallback) {
         var req = new XMLHttpRequest
         var index = 0
+        var endpoint = ajaxEndpoint+url+'?action='+action
         req.onreadystatechange = function() {
             if (req.readyState >= 2 && req.status !== 200) {
                 callback({status: req.status, error: req.statusText})
             }
 
             function parseJson(packet) {
-                console.log("AJAX response to " + query + ": " + packet)
+                console.log("AJAX response to " + endpoint + ": " + packet)
                 try {
                     callback(null, JSON.parse(packet))
                 } catch (e) {
@@ -34,19 +35,17 @@ module.exports = function(ajaxEndpoint) {
                 }
             }
         }
-        query = JSON.stringify(query)
-        console.log("AJAX request to "+ajaxEndpoint+": "+query)
-        req.open("post", ajaxEndpoint, true)
+        req.open("post", endpoint, true)
         req.setRequestHeader('Content-Type','application/json')
-        req.send(query)
+        req.send()
         return req
     }
     return {
         getRoutes: function(url, routesCallback) {
-            ajax({action:'routes', url:url}, routesCallback)
+            ajax(url, 'routes', routesCallback)
         },
         getData: function(url, packetCallback, closeCallback) {
-            var req = ajax({action:'get', url:url}, function(error, json) {
+            var req = ajax(url, 'get', function(error, json) {
                 if (error) {
                     packetCallback('error', error)
                 } else {
