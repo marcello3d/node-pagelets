@@ -23,7 +23,7 @@ module.exports = function(pagelets, options) {
                 res.setHeader('Content-Type', 'application/json')
                 var transport = {
                     send:function(type, data) {
-                        console.log(query.url+": Sending "+type)
+                        console.log(url+": Sending "+type)
                         res.write(JSON.stringify([type, data])+'\n')
                     },
                     setHeader:function(name,value) {
