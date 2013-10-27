@@ -1,67 +1,82 @@
 var http = require('http')
-var express = require('express')
-var enchilada = require('enchilada')
+var connect = require('connect')
 
 var Pagelets = require('pagelets')
 var RactiveTemplater = require('pagelets/server/ractive-templater')
 var AjaxTransport = require('pagelets/server/ajax-transporter')
-var JsModel = require('pagelets/server/jsmodel')
+var SimpleModel = require('pagelets/model/simple/server')
 
 // Pagelets manager
 var pagelets = new Pagelets({
-    templater: new RactiveTemplater({
-        viewsPath: __dirname+'/templates'
-    }),
-    browserJsPath:'/app.js'
+    debug:true
 })
+
+
+/*
+
+ pagelets bootstrap file needs:
+
+ 1. pagelets client core module
+ 2. transporter module
+
+ 3. routes definitions
+ a. template module (based on route definitions?)
+ b. model module (based on route definitions?)
+ c. route custom code
+ d. route CSS (possibly external)
+
+ */
+
 
 // Define pagelets
 pagelets.define('/', {
-    template:'index.ract'
+    template:RactiveTemplater(__dirname+'/templates/index.ract')
 })
 pagelets.define('/page2', {
-    template:'page2.ract',
-    model: function(req, callback) {
-        var model = new JsModel
+    template:RactiveTemplater(__dirname+'/templates/page2.ract'),
+    get: function(req, res) {
+        var model = new SimpleModel
+        res.model(model)
         var interval = setInterval(function() {
-            if (!model.hasDeltaListeners()) {
-                clearInterval(interval)
-            }
-            model.set('message', "Random: "+Math.floor(Math.random()*100))
+            model.data.message = "Random: "+Math.floor(Math.random()*100)
+            model.update()
         },50)
-        req.on('disconnect', function() {
+        req.onClose(function() {
             clearInterval(interval)
         })
-        callback(null, model)
     }
 })
-pagelets.define('#/header', {
-    template:'_header.ract'
+pagelets.define('!/header', {
+    template:RactiveTemplater(__dirname+'/templates/_header.ract')
 })
-var footerModel = new JsModel({ date:new Date })
-pagelets.define('#/footer', {
-    template:'_footer.ract',
-    model: footerModel
+var footerModel = new SimpleModel({ date:new Date })
+pagelets.define('!/footer', {
+    template:RactiveTemplater(__dirname+'/templates/_footer.ract'),
+    get: function(req,res) {
+        res.model(footerModel)
+    }
 })
 setInterval(function() {
-    footerModel.set('date', new Date)
+    footerModel.data.date = new Date
+    footerModel.update()
 }, 1000)
 
-pagelets.compile()
+pagelets.compile(function(error) {
+    if (error) {
+        console.error("Error compiling pagelets:",error)
+        return
+    }
 
-var app = express()
+    var app = connect()
 
 // Transport layer for use by pagelets
-app.use(pagelets.middleware) // Handle top-level page requests
-app.use(AjaxTransport(pagelets)) // Handle pagelet ajax requests
+    app.use(connect.compress())
+    app.use(pagelets.middleware) // Handle top-level page requests
+    app.use(AjaxTransport(pagelets)) // Handle pagelet ajax requests
 
-app.use(enchilada({ src: __dirname+'/static/' })) // Serve up browserified JavaScript
-app.use(express.static(__dirname+'/static/')) // Serve up static files
+    var server = http.createServer(app)
 
-var server = http.createServer(app)
-
-server.listen(10101, function() {
-    console.log('Server listening',server.address())
+    server.listen(10101, function() {
+        console.log('Server listening',server.address())
+    })
 })
-
-
