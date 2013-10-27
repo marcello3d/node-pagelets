@@ -1,4 +1,4 @@
-var Listenable = require('./Listenable')
+var Listenable = require('listenable')
 module.exports = ModelObject
 
 function ModelObject(initialData) {

@@ -1,9 +1,9 @@
-var Listenable = require('../Listenable')
+var Listenable = require('listenable')
 
 module.exports = StaticModel
 
 function StaticModel(data) {
-    this.data = data
+    this.data = data || {}
 }
 
 StaticModel.prototype.type = 'static'

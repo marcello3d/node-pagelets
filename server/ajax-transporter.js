@@ -1,5 +1,6 @@
 var urlParse = require('url').parse
 var qs = require('qs')
+var Listenable = require('listenable')
 
 module.exports = function(pagelets, options) {
     options = options || {}
@@ -15,28 +16,47 @@ module.exports = function(pagelets, options) {
         switch (query.action) {
             case 'routes':
                 var browserSpecs = pagelets.getRoute(url).pagelet.browserSpecs
-                res.header('Content-Type', 'application/json')
+                res.setHeader('Content-Type', 'application/json')
                 res.end(JSON.stringify(browserSpecs))
                 break
 
             case 'get':
-                res.setHeader('Content-Type', 'application/json')
-                var transport = {
-                    send:function(type, data) {
-                        console.log(url+": Sending "+type)
-                        res.write(JSON.stringify([type, data])+'\n')
-                    },
-                    setHeader:function(name,value) {
-                        res.setHeader(name,value)
-                    },
-                    close:function() {
+                console.log(url+": Opened connection...")
+                res.setHeader('Content-Type', 'application/x-json-stream')
+                var closed
+                var transport = new Listenable
+                var count=0
+                transport.send = function(type, data) {
+                    if (!closed) {
+                        var json = JSON.stringify([type, data])
+                        var flushed = res.write(json+'\n')
+                        console.log(url+": "+(flushed ? 'Sent':'Queued')+" "+json.slice(0,100))
+                        res.flush()
+                    } else {
+                        console.log(url+": Not sending "+type+" (connection closed)", data)
+                    }
+                    if (count++ === 3) {
+                        transport.close()
+                    }
+                }
+                transport.setHeader = function(name,value) {
+                    res.setHeader(name,value)
+                }
+                transport.close = function() {
+                    if (!closed) {
+                        closed = true
+                        console.log(url+": Connection closed")
+                        transport.send('end')
                         res.end()
+                        transport.emit('close')
                     }
                 }
                 // Stop listening to model when connection is closed
-                req.socket.on('close', function () {
-                    if (transport.onClose) {
-                        transport.onClose()
+                req.on('close', function () {
+                    if (!closed) {
+                        closed = true
+                        console.log(url+": Connection lost")
+                        transport.emit('close')
                     }
                 })
                 if (false === pagelets.servePageletData({
@@ -44,12 +64,12 @@ module.exports = function(pagelets, options) {
                     tag:query.tag || null,
                     headers:req.headers,
                     setHeader: function(name, value) {
-                        console.log("Setting header: ",name, value)
+                        console.log(url+": Setting header: ",name, value)
                         res.setHeader(name, value)
                     },
                     transport:transport
                 })) {
-                    res.status(404)
+                    res.statusCode = 404
                     res.end()
                 }
                 break

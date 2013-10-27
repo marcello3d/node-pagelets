@@ -7,8 +7,17 @@ module.exports = function(getPagelet) {
     function RactivePagelet(options) {
         console.log("init pagelet "+options.data.href)
         var pagelet = getPagelet(options.data.href)
-        if (!pagelet) { throw new Error("Could not load pagelet: "+options.data.href)}
-        return pagelet.ractive = new pagelet.route.Component(options)
+        if (!pagelet) {
+            throw new Error("Could not load pagelet: "+options.data.href)
+        }
+        // Previously initialized ractive?
+        if (!pagelet.ractive) {
+            pagelet.ractive = new pagelet.route.Component(options)
+            if (pagelet.route.ractEv) {
+                pagelet.ractive.on(pagelet.route.ractEv)
+            }
+        }
+        return pagelet.ractive
     }
 
     return {
@@ -30,6 +39,7 @@ module.exports = function(getPagelet) {
         },
         show: function(url) {
             if (currentRactive) {
+                // TODO: explicitly find all the old pagelets and tear them down
                 currentRactive.teardown()
             }
             currentRactive = new RactivePagelet({

@@ -1,9 +1,9 @@
-var Listenable = require('../Listenable')
+var Listenable = require('listenable')
 
 module.exports = SimpleModel
 
 function SimpleModel(data) {
-    this.data = data
+    this.data = data || {}
     this.listenable = new Listenable
     this.closed = false
 }
@@ -40,6 +40,7 @@ SimpleModel.prototype.readStream = function(tag) {
     self.listenable.on('update', sendUpdate)
     self.listenable.on('close', onClose)
     stream.close = function() {
+        console.log("Simple model: closing stream")
         if (!closed) {
             closed = true
             self.listenable.off('update', sendUpdate)

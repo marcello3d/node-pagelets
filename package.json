@@ -11,8 +11,14 @@
     "node": ">=0.10"
   },
   "dependencies": {
-    "tosource": "~0.1.1",
-    "router-core":"0.1.0"
+    "browserify":"2.35.0",
+    "clean-css":"1.1.6",
+    "listenable":"0.1.0",
+    "resumer":"0.0.0",
+    "router-core":"0.1.0",
+    "tosource":"0.1.1",
+    "uglify-js":"2.4.1",
+    "waiter":"0.1.1"
   },
   "keywords": [
     "pagelet"

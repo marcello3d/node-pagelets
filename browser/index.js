@@ -99,7 +99,7 @@ module.exports = function (options) {
         })
     }
 
-    window.PPinit = function(initialRoutes) {
+    return function(initialRoutes) {
         router.add(initialRoutes)
         window.onpopstate = function(event) { loadPage(false, null, event.state) }
         document.addEventListener('click',function(event) {

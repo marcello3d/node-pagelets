@@ -7,7 +7,7 @@ module.exports = function(ajaxEndpoint) {
         var endpoint = ajaxEndpoint+url+'?action='+action
         req.onreadystatechange = function() {
             if (req.readyState >= 2 && req.status !== 200) {
-                callback({status: req.status, error: req.statusText})
+                return callback({status: req.status, readyState:req.readyState, error: req.statusText})
             }
 
             function parseJson(packet) {
@@ -19,7 +19,7 @@ module.exports = function(ajaxEndpoint) {
                 }
             }
 
-            if (req.readyState >= 3 && req.status === 200) {
+            if (req.readyState >= 3) {
                 var i
                 while ((i = req.responseText.indexOf('\n',index)) >= 0) {
                     parseJson(req.responseText.substring(index, i))
@@ -36,7 +36,6 @@ module.exports = function(ajaxEndpoint) {
             }
         }
         req.open("post", endpoint, true)
-        req.setRequestHeader('Content-Type','application/json')
         req.send()
         return req
     }

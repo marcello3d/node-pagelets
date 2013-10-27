@@ -1,31 +1,26 @@
 var Ractive = require('ractive')
 var fs = require('fs')
 
-module.exports = RactiveTemplater
-
-function RactiveTemplater(options) {
-    if (!options.viewsPath) {
-        throw new Error("Must specify options.viewSrc")
-    }
-    this.viewsPath = options.viewsPath
-}
 
 /**
  * Compiles a template
- * @param pagelet
- * @return {Array} list of referenced pagelet paths
+ * @param templatePath
  */
-RactiveTemplater.prototype.compile = function(pagelet) {
-    if (!pagelet.options.template) {
-        return []
+module.exports = function (templatePath) {
+    var compiled = compile(templatePath)
+    return function(route) {
+        route.browser.ract = compiled.template
+        if (route.options.clientEvents) {
+            route.browser.ractEv = route.options.clientEvents
+        }
+        return compiled.hrefs
     }
-    var path = this.viewsPath + '/' + pagelet.options.template
-    try { require(path) } catch (e) {}
-    var template = Ractive.parse(fs.readFileSync(path, 'utf8'))
-    pagelet.browser.ract = template
+}
 
+function compile(templatePath) {
+    try { require(templatePath) } catch (e) {}
+    var template = Ractive.parse(fs.readFileSync(templatePath, 'utf8'))
     var pageletHrefs = []
-
     if (template.forEach) {
         template.forEach(walkRactiveAST)
     }
@@ -37,7 +32,8 @@ RactiveTemplater.prototype.compile = function(pagelet) {
             node.f && node.f.forEach && node.f.forEach(walkRactiveAST)
         }
     }
-    return pageletHrefs
+    return {
+        template: template,
+        hrefs: pageletHrefs
+    }
 }
-
-
