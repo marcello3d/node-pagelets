@@ -25,7 +25,6 @@ module.exports = function(pagelets, options) {
                 res.setHeader('Content-Type', 'application/x-json-stream')
                 var closed
                 var transport = new Listenable
-                var count=0
                 transport.send = function(type, data) {
                     if (!closed) {
                         var json = JSON.stringify([type, data])
@@ -34,9 +33,6 @@ module.exports = function(pagelets, options) {
                         res.flush()
                     } else {
                         console.log(url+": Not sending "+type+" (connection closed)", data)
-                    }
-                    if (count++ === 3) {
-                        transport.close()
                     }
                 }
                 transport.setHeader = function(name,value) {
