@@ -16,6 +16,9 @@ module.exports = function(getPagelet) {
             if (pagelet.route.ractEv) {
                 pagelet.ractive.on(pagelet.route.ractEv)
             }
+            pagelet.ractive.on('teardown', function(){
+                pagelet.teardown()
+            })
         }
         return pagelet.ractive
     }

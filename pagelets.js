@@ -120,7 +120,10 @@ PageletManager.prototype.servePageletData = function(options) {
         url:url,
         params:route.params,
         headers:options.headers,
-        connection:options.connection
+        connection:options.connection,
+        onClose:function(fn) {
+            transport.on('close', fn)
+        }
     }
     function sendError(error) {
         transport.send('error', error)
@@ -223,6 +226,9 @@ PageletManager.prototype.compile = function(callback) {
             })
         } else {
             route.routes = []
+        }
+        if (route.options.events) {
+            route.browser.events = route.options.events
         }
     })
 

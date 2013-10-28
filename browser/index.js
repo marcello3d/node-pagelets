@@ -40,11 +40,20 @@ module.exports = function (options) {
                 url: url,
                 route: route,
                 teardown: function() {
-                    if (disconnect) { disconnect() }
+                    if (pagelet.route.events && pagelet.route.events.teardown) {
+                        pagelet.route.events.teardown.call(pagelet)
+                    }
+                    if (disconnect) {
+                        disconnect()
+                    }
                 }
             }
             // Initialize pagelet template/dom
             templater.init(pagelet)
+
+            if (pagelet.route.events && pagelet.route.events.init) {
+                pagelet.route.events.init.call(pagelet)
+            }
 
             // Initialize pagelet model
             if (route.get) {
