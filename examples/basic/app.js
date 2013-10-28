@@ -1,4 +1,5 @@
 var http = require('http')
+var fs = require('fs')
 var connect = require('connect')
 
 var Pagelets = require('pagelets')
@@ -30,28 +31,40 @@ var pagelets = new Pagelets({
 
 // Define pagelets
 pagelets.define('/', {
-    template:RactiveTemplater(__dirname+'/templates/index.ract')
+    template:RactiveTemplater(__dirname+'/templates/index.ract'),
+    css: fs.readFileSync(__dirname+'/css/main.css','utf8'),
+    events:{
+        init: function() {
+            console.log("init header")
+        },
+        teardown: function() {
+            console.log("teardown header")
+        }
+    }
 })
 pagelets.define('/page2', {
     template:RactiveTemplater(__dirname+'/templates/page2.ract'),
+    css: fs.readFileSync(__dirname+'/css/main.css','utf8'),
     get: function(req, res) {
         var model = new SimpleModel
         res.model(model)
         var interval = setInterval(function() {
             model.data.message = "Random: "+Math.floor(Math.random()*100)
             model.update()
-        },50)
+        },200)
         req.onClose(function() {
             clearInterval(interval)
         })
     }
 })
 pagelets.define('!/header', {
-    template:RactiveTemplater(__dirname+'/templates/_header.ract')
+    template:RactiveTemplater(__dirname+'/templates/_header.ract'),
+    css: fs.readFileSync(__dirname+'/css/header.css','utf8')
 })
 var footerModel = new SimpleModel({ date:new Date })
 pagelets.define('!/footer', {
     template:RactiveTemplater(__dirname+'/templates/_footer.ract'),
+    css: fs.readFileSync(__dirname+'/css/footer.css','utf8'),
     get: function(req,res) {
         res.model(footerModel)
     }
