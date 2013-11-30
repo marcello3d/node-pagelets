@@ -1,6 +1,4 @@
-<div id="body">
-    <rv-pagelet href="!/header" title="Second page"/>
-    <p>Here is the second page. {{message}}</p>
-    <a href="/">Back to index</a>
-    <rv-pagelet href="!/footer" />
-</div>
+<rv-pagelet href="!/header" title="Second page"/>
+<p>Here is the second page. {{message}}</p>
+<a href="/">Back to index</a>
+<rv-pagelet href="!/footer" />

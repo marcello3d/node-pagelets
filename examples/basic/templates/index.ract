@@ -1,6 +1,4 @@
-<div id="body">
-    <rv-pagelet href="!/header" title="Index page"/>
-    <p>Welcome to the sample app!</p>
-    <a href="/page2">Go to page 2</a>
-    <rv-pagelet href="!/footer" />
-</div>
+<rv-pagelet href="!/header" title="Index page"/>
+<p>Welcome to the sample app!</p>
+<a href="/page2">Go to page 2</a>
+<rv-pagelet href="!/footer" />
