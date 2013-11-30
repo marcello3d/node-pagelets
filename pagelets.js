@@ -197,7 +197,7 @@ PageletManager.prototype.define = function(path, options) {
 }
 PageletManager.prototype.compile = function(callback) {
     if (this.compiled) {
-        return callback()
+        return callback && callback()
     }
 
     var self = this
@@ -262,34 +262,51 @@ PageletManager.prototype.compile = function(callback) {
     }
     new Waiter(
         function(done) {
-            var src = ''
-            self.routes.forEach(function(route) {
+            var seenCss = []
+            var waiter = new Waiter
+            var css = []
+            self.routes.forEach(function(route, index) {
                 var routeCss = route.options.css
-                if (routeCss) {
-                    src += '/* '+route.path+' */\n\n'
+                if (routeCss && seenCss.indexOf(routeCss) === -1) {
+                    seenCss.push(routeCss)
+                    var prefix = '/* '+route.path+' */\n\n'
                     if (typeof routeCss === 'function') {
-                        src += routeCss()
+                        waiter(function(done) {
+                            routeCss(function(error, value) {
+                                if (error) {
+                                    return done(error)
+                                }
+                                css[index] = prefix + value
+                                done()
+                            })
+                        })
                     } else if (typeof routeCss === 'string') {
-                        src += routeCss
+                        css[index] = prefix + routeCss
+                    } else {
+                        throw new Error("Cannot handle css type: "+typeof routeCss)
                     }
-                    src += '\n\n'
                 }
             })
-
-            if (compress) {
-                src = cleanCss.process(src, {
-                    removeEmpty:true
-                })
-            }
-            self.css = make(src, 'text/css', self.cssHash)
-            done()
+            waiter.waitForAll(function(error) {
+                if (error) {
+                    return done(error)
+                }
+                var src = css.filter(function(x) { return !!x }).join('\n\n')
+                if (compress) {
+                    src = cleanCss.process(src, {
+                        removeEmpty:true
+                    })
+                }
+                self.css = make(src, 'text/css', self.cssHash)
+                done()
+            })
         },
         function(done) {
             var allRouteBrowserSpecs = self.routes.map(function (route) {
                 return route.browser
             })
             var src =
-                'var pagelets = require("pagelets/browser")({'+
+                'require("pagelets/browser")({'+
                     'router:require("pagelets/browser/router"),'+
                     'transporter:require("pagelets/browser/ajax-transporter")(),'+
                     'templater:require("pagelets/browser/ractive-templater"),'+
@@ -298,8 +315,8 @@ PageletManager.prototype.compile = function(callback) {
                     '{model:require("pagelets/model/simple/browser"),bind:require("pagelets/model/simple/ractive-bind")},'+
                     '{model:require("pagelets/model/static/browser"),bind:require("pagelets/model/static/ractive-bind")}'+
                     ']'+
-                '});'+
-                'pagelets('+ toSource(allRouteBrowserSpecs, null, compress ? 0 : '  ') + ')'
+                '})'+
+                '('+ toSource(allRouteBrowserSpecs, null, compress ? 0 : '  ') + ')'
 
 
             var bundle = browserify(resumer().queue(src).end())
@@ -318,13 +335,15 @@ PageletManager.prototype.compile = function(callback) {
         }
     ).waitForAll(function(error) {
         if (error) {
-            return callback(error)
+            return callback && callback(error)
         }
-        var html = '<!DOCTYPE html>'+
-            '<head><link type=text/css rel=stylesheet href="'+self.cssHash.current+'"/>' +
-            '<body><script src="'+self.jsHash.current+'"></script>\n'
+        var html = '<!DOCTYPE html>'
+        if (self.css) {
+            html+='<head><link type=text/css rel=stylesheet href="'+self.cssHash.current+'"/>'
+        }
+        html += '<body><script src="'+self.jsHash.current+'"></script>\n'
         self.html = make(html, 'text/html;charset=utf-8')
         self.compiled = true
-        callback()
+        callback && callback()
     })
 }
