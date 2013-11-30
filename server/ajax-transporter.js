@@ -30,7 +30,9 @@ module.exports = function(pagelets, options) {
                         var json = JSON.stringify([type, data])
                         var flushed = res.write(json+'\n')
                         console.log(url+": "+(flushed ? 'Sent':'Queued')+" "+json.slice(0,100))
-                        res.flush()
+                        if (res.drain) {
+                            res.drain()
+                        }
                     } else {
                         console.log(url+": Not sending "+type+" (connection closed)", data)
                     }

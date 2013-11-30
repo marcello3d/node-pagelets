@@ -83,7 +83,7 @@ pagelets.compile(function(error) {
     var app = connect()
 
 // Transport layer for use by pagelets
-    app.use(connect.compress())
+//    app.use(connect.compress())
     app.use(pagelets.middleware) // Handle top-level page requests
     app.use(AjaxTransport(pagelets)) // Handle pagelet ajax requests
 

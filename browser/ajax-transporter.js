@@ -52,6 +52,7 @@ module.exports = function(ajaxEndpoint) {
                 }
             }, closeCallback)
             return function disconnect() {
+                console.log(url+": aborting")
                 req.abort()
             }
         }
