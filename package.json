@@ -29,7 +29,7 @@
   "devDependencies": {
     "express": "~3.4.0",
     "enchilada": "~0.4.2",
-    "ractive": "git://github.com/Rich-Harris/Ractive",
+    "ractive":"Rich-Harris/Ractive#0.3.8",
     "connect": "~2.9.0"
   }
 }
