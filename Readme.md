@@ -1,6 +1,10 @@
 Pagelets
 ==============
 
+UNSUPPORTED: pagelets is no longer in development
+
+==============
+
 Pagelets is a node.js framework for describing web pages in terms of realtime hierarchical fragments.
 
 Each pagelet consists of a URL route, a template, and a data source.
